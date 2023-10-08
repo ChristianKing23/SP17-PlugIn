@@ -1,19 +1,20 @@
 {
-  "manifest_version": 3,
-  "name": "Notelee",
-  "version": "0.1"
-  "action":{
-    "default_popup": "popup.html",
-    "default_title": "Notelee"
+    "manifest_version": 3,
+    "name": "Notelee",
+    "version": "0.1",
+    "action": {
+      "default_popup": "popup.html",
+      "default_title": "Notelee"
+    },
+    "content_scripts": [
+      {
+        "matches": [
+          "<all_urls>"
+        ],
+        "js": [
+          "accountManagement.js"
+        ]
+      }
+    ]
   }
-  "content_scripts":[
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "popup.js"
-      ]
-    }
-  ]
-}
+  
