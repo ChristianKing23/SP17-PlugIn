@@ -9,9 +9,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 300px; /* Set the width of the popup */
+            width: 300px;
             height: 400px; 
             flex-direction: column;
+            
         }
 
         table {
@@ -35,6 +36,10 @@
             background-color: pink;
             color: white;
             padding: 10px;
+            border: 1px solid black;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: larger;
+            
         }
 
         .navbar button {
@@ -47,14 +52,31 @@
             margin: 0 5px;
         }
         .navbar div {
-            font-weight: bold; /* Bold Text */
-            margin: 0 auto; /* Centered Text */
+            font-weight: bold; 
+            margin: 0 auto;
+            border: black;
         }
 
         .navbar button:hover {
             background-color: #777;
         }
+        .accountMenu button {
+            background-color: #add8e6;
+            color: black;
+            border: none;
+            padding: 15px 30px; 
+            font-size: 20px;
+            cursor: pointer;
+            margin: 0 5px;
+            border-radius: 5px; 
+            border: 1px solid black;
+        }
+
+        .accountMenu button:hover {
+            background-color: #87cefa; 
+        }
     </style>
+
 </head>
 <body>
 
@@ -64,7 +86,7 @@
         <button>Help</button>
     </div>
 
-    <table class="accountMenu">
+    <table class="accountMenu" >
         <tr>
             <td><button id="loginButton">Login</button></td>
         </tr>
@@ -78,4 +100,3 @@
     <script src="accountManagement.js"></script>
 </body>
 </html>
-
