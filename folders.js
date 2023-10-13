@@ -4,6 +4,7 @@ function showFolders() {
         <div class="folderNav" style="background-color: white; width: 100%; 
          margin-top: 44px;">
             <button id="folder1" style="background-color: #add8e6;">Folder 1</button>
+            <button id="createFolder" style="background-color: #add8e6;">Create Folder</button>
         </div>
     `;
     //variable showNotesTableHTML represents the new table to show any notes made
