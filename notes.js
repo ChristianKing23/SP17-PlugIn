@@ -282,3 +282,16 @@ function retrieveNoteText(folderid) {
             return noteTextArray4;
     }
 }
+
+function boldText(){
+
+}
+function underlineText(){
+
+}
+function ItalicizeText(){
+
+}
+function deleteNote(){
+    
+}
