@@ -1,3 +1,4 @@
+
 /*
 The purpose of buttonClick is to load the event listeners for the folder buttons and the create note button.
 1. if this is the first time accessing the folders, AKA logging in/registering, call loadFolderNotes(1) (1 being folder 1).
@@ -17,11 +18,12 @@ function buttonClick(string){
     const folder2 = document.getElementById('folder2');
     const folder3 = document.getElementById('folder3');
     const folder4 = document.getElementById('folder4');
+    
+
     //2. Add an event listener to all 4.
     //When clicked, load the folder notes for that folder using function loadFolderNotes().
     folder1.addEventListener('click', function(){
         console.log("You clicked folder1.");
-        folder2.color=
         loadFolderNotes(1);
     });
     folder2.addEventListener('click', function(){
@@ -36,66 +38,37 @@ function buttonClick(string){
         console.log("You clicked folder4.");
         loadFolderNotes(4);
     });
-    //3. Add an event listener to the create note button. The purpose is to open a popup windo
-    //so the user can choose which folder to add the note to.
-    createanote.addEventListener('click', function(){
-        //Create the popup window.
-        const popup = window.open('', '_blank', 'width=300,height=50');
-        //create the html code the popup window will look like. There are 4 buttons for the 4 folders.
-        const buttonsHTML = `
-        <table class="buttons">
-        <tr>
-        <td><button id="folder1newnote">Folder1</button></td>
-        <td><button id="folder2newnote">Folder2</button></td>
-        <td><button id="folder3newnote">Folder3</button></td>
-        <td><button id="folder4newnote">Folder4</button></td>
-        </tr>
-        </table>
-        `
-        //add the html to the popup window.
-        popup.document.body.innerHTML += buttonsHTML;
-        //Get the folder buttons from the popupwindow.
-        const folder1newnote = popup.document.getElementById('folder1newnote');
-        const folder2newnote = popup.document.getElementById('folder2newnote');
-        const folder3newnote = popup.document.getElementById('folder3newnote');
-        const folder4newnote = popup.document.getElementById('folder4newnote');
-        console.log("Opened popup.");
-        //3. Add an event listener to every button in the popup.
-        //When click, the popup should close and load the original window to a note making menu
-        //using newNote() from notes.js.
-        folder1newnote.addEventListener('click',function(){
-            console.log("Chose to create note for folder1.");
-            popup.close();
-            newNote(1);
-        });
-        folder2newnote.addEventListener('click',function(){
-            console.log("Chose to create note for folder2.");
-            popup.close();
-            newNote(2);
-        });
-        folder3newnote.addEventListener('click',function(){
-            console.log("Chose to create note for folder3.");
-            popup.close();
-            newNote(3);
-        });
-        folder4newnote.addEventListener('click',function(){
-            console.log("Chose to create note for folder4.");
-            popup.close();
-            newNote(4);
-        });
-    });
 }
 
 //#########################################################################################################################################################
 //#########################################################################################################################################################
 //#########################################################################################################################################################
 //#########################################################################################################################################################
+
+function createBottomBar(folderNum) {
+    const bottomBarDiv = document.createElement('div');
+    bottomBarDiv.classList.add('bottombar');
+    const createNoteButton = document.createElement('button');
+    createNoteButton.id = 'createanote' + folderNum;
+    createNoteButton.className = 'createanote';
+    createNoteButton.textContent = 'Create Note for Folder ' + folderNum;
+    const bottomBar = document.querySelector('.bottombar');
+    bottomBarDiv.appendChild(createNoteButton);
+    if(bottomBar){
+        bottomBar.remove();
+        document.body.appendChild(bottomBarDiv);
+    }
+    else if(!bottomBar){
+        document.body.appendChild(bottomBarDiv);
+    }
+    
+}
 /*
 The purpose of this function is to change the HTML code and layout depending on whether the folder has notes, does not have notes,
 or if the previous folder visited had notes, or did not have notes. 
 */
-function emptyNoteScreen(folderNum, titles, text){
-    console.log("On emptyNoteScreen for folder"+folderNum+".");
+function loadFolderScreen(folderNum, titles, text){
+    console.log("On loadFolderScreen for folder"+folderNum+".");
     //create the folder navigation bar and the "no notes" screen
     const folderNavHTML = `
             <div class="folderNav" style="background-color: white; width: 100%; 
@@ -107,69 +80,81 @@ function emptyNoteScreen(folderNum, titles, text){
             </div>
             `
             const notebuttonHTML = `
-            <table class="noNoteandCreateNote">
+            <table class="noNotes">
             <tr>
             <td><p>No Notes.</p>
             </td>
-            <tr>
-            <tr>
-                <td><button class = "newNoteButton" id = "createanote">Create Note.</button>
-                </td>
-                <tr>
                 </table>
         `;
-
+    
         //if the folder is empty, aka no notes in the folder
         if(titles == '' && text == ''){
         //get the folder navigation bar, the note list table, and create note button
         const folderNav = document.querySelector('.folderNav');
         const noteList = document.querySelector('.noteList');
-        const createanote = document.getElementById('createanote');
         //if there is no foldernav, that means we logged in for first time. 
         //add it to the document along the create note button/table.
         if(!folderNav){
-            document.body.innerHTML += folderNavHTML+notebuttonHTML;
+            document.body.innerHTML += folderNavHTML+notebuttonHTML; 
+            folderColor(folderNum);
+            createBottomBar(folderNum);
         }
+        
+
         //if there IS a foldernav, along with the folder we're going to being an empty folder, then remove notelist if it exists.
         //only add create note button because the text "no notes" will already be there.
         else if (folderNav){
+            folderColor(folderNum);
             //if notelist exists, that means previous folder had notes. remove it since the current folder has no list because no notes to make a list.
             if(noteList){
                 //remove notelist.
                 noteList.remove();
                 //remove the createanote button since we're adding a new one.
-                createanote.remove();
+                const bottombar = document.querySelector('.bottombar');
+                if(bottombar){
+                    bottombar.remove();
+                }
                 //add the no note table.
                 document.body.innerHTML += notebuttonHTML;
+                createBottomBar(folderNum);
                 //go back to buttonClick to travel between folders again.
                 buttonClick();
             }
             //if notelist does NOT exist, then previous button was also empty. Nothing to change.
             else if(!noteList){
+                createBottomBar(folderNum);
             }  
         }
         
     }
-    //if the folder we're going to DOES have notes...
+    //if the folder we're going that DOES have notes...
     else{
+        folderColor(folderNum);
     //if the previous had no notes, remove the no notes table.
-    const noNoteandCreateNote = document.querySelector('.noNoteandCreateNote');
-        if(noNoteandCreateNote){
-            noNoteandCreateNote.remove();
-            /*createanote2.remove();
-            const createnoteHTML = `
-            <button id="createanote">Create Note</button>
-            `
-            document.body.innerHTML += createnoteHTML;*/
-        } 
-        //if the previous did not have a no notes table, then it had a noteList.
-        //to go from a folder with notes to another folder with notes then dont do anything
-        else if(!noNoteandCreateNote){
-            
-        }
-        console.log("There are notes. Loading page...");
-        buttonClick("hi");
+        const noNotes = document.querySelector('.noNotes');
+            if(noNotes){
+                noNotes.remove();
+                createBottomBar(folderNum);
+
+            } 
+            //if the previous did not have a no notes table, then it had a noteList.
+            //to go from a folder with notes to another folder with notes then dont do anything
+            else if(!noNotes){
+                createBottomBar(folderNum);
+            }
+            console.log("There are notes. Loading page...");
+            buttonClick("hi");
     }
+    const createNote = document.querySelector('.createanote');
+    if(createNote){
+        const createNoteID = createNote.id;
+        const createNote2 = document.getElementById(createNoteID);
+        createNote2.addEventListener('click', function(){
+            console.log("You clicked create note.");
+            newNote(folderNum);
+        });
+    }
+    console.log("Back to buttonClick....");
     
 }
 //#########################################################################################################################################################
@@ -200,17 +185,17 @@ The purpose of this function is to create a table, noteList, that shows all the 
 */
 function showNotes(folderNum, titles, text){
     console.log("Loading notes list for folder"+folderNum);
-    //If, somehow, a folder with no notes is passed in, then go straight to the empty note screen using emptyNoteScreen().
+    //If, somehow, a folder with no notes is passed in, then go straight to the load folder screen using loadFolderScreen().
     if(titles == '' && text == ''){
-        console.log("No notes to load. Going to empty note screen for folder"+folderNum);
-        emptyNoteScreen(folderNum, titles, text);
+        console.log("No notes to load. Going to load folder screen for folder"+folderNum);
+        loadFolderScreen(folderNum, titles, text);
     }
     //Otherwise, if there are notes, then remove the previous elements. This is because a new element will be added.
     else{
         //remove createanote button if it is there.
-        const createanote2 = document.getElementById('createanote');
-        if(createanote2){
-            createanote2.remove();
+        const bottombar = document.querySelector('.bottombar');
+        if(bottombar){
+            bottombar.remove();
         }
         //remove the previous notes list if its shown, as the new one will be the updated one.
         const notelists = document.querySelector('.noteList');
@@ -220,7 +205,7 @@ function showNotes(folderNum, titles, text){
         //html for the folder navigation bar.
         const folderNavHTML = `
         <div class="folderNav" style="background-color: white; width: 100%; 
-         margin-top: 44px;">
+         margin-top: 47px;">
             <button id="folder1" style="background-color: #add8e6;">Folder 1</button>
             <button id="folder2" style="background-color: #add8e6;">Folder 2</button>
             <button id="folder3" style="background-color: #add8e6;">Folder 3</button>
@@ -232,6 +217,8 @@ function showNotes(folderNum, titles, text){
         if(!folderNav){
             document.body.innerHTML += folderNavHTML;
         }
+
+        
         //create a new table for the list of notes to show.
         const noteListTable = document.createElement('table');
         //the table should have an id equal to "noteList"+the number of the current folder.
@@ -239,12 +226,6 @@ function showNotes(folderNum, titles, text){
         //Give the noteList table a class called "noteList"
         noteListTable.classList.add('noteList');
         //Create a "Create Note" button.
-        const createanote = document.createElement('button');
-        //give it id "creatanote"
-        createanote.id = 'createanote';
-        //update its text content
-        createanote.textContent = 'Create Note';
-        //create an array to hold the id of every individual note
         const noteidsarray = [];
         //for every note in the folder, update the noteList table.
         for (let i = 0; i < titles.length; i++) {
@@ -264,7 +245,7 @@ function showNotes(folderNum, titles, text){
             noteidsarray.push(noteButtonID);
             //make the id of every button equal to the noteButtonID created above.
             noteButton.id = noteButtonID;
-            console.log("Added button for title "+titles[i]);
+            buttonColor(noteButton, i);
             //add the note's button to the buttoncell (basically the table data), then the button cell into the noteList table's row, then the row into the noteList table.
             buttonCell.appendChild(noteButton);
             row.appendChild(buttonCell);
@@ -277,11 +258,11 @@ function showNotes(folderNum, titles, text){
         console.log("Note list appended.");
         //Add the noteList table onto the document along with the create a note button.
         document.body.appendChild(noteListTable);
-        document.body.appendChild(createanote);
-        //call emptyNoteScreen even if the folder actually have notes. this is because without it, you
+        createBottomBar(folderNum);
+        //call loadFolderScreen even if the folder actually have notes. this is because without it, you
         //1. wouldnt be able to view other folders after appending the tables and
         //2. calling buttonClick() here would cause formatting issues for the other folders.
-        emptyNoteScreen(folderNum, titles, text);
+        loadFolderScreen(folderNum, titles, text);
         //for each id in the noteidsarray call reLoadNote whenever they are clicked. This will reload the notes for editting.
         noteidsarray.forEach(id => {
             //get button based on the id
@@ -293,6 +274,8 @@ function showNotes(folderNum, titles, text){
             });
         });
     }
+
+    
 }
 
 //#########################################################################################################################################################
@@ -320,11 +303,11 @@ function loadFolderNotes(folderID){
     const noteTitle = retrieveNoteTitle(folderID);
     const noteText = retrieveNoteText(folderID);
     console.log("Checking folder"+folderID+" for notes....");
-    //If the retrieve functions return nothing, then go to emptyNoteScreen() to load a table that tells the user there are no notes to show.
+    //If the retrieve functions return nothing, then go to loadFolderScreen() to load a table that tells the user there are no notes to show.
     if(noteText == '' && noteTitle == ''){
         console.log("Checked. No notes for Folder"+folderID);
-        console.log("Going to emptyscreen for folder"+folderID);
-        emptyNoteScreen(folderID, noteText, noteTitle);
+        console.log("Going to folder screen for folder"+folderID);
+        loadFolderScreen(folderID, noteText, noteTitle);
     }
     //Otherwise, if the retrieve functions return SOMETHING (meaning the folder has a note),
     //add those titles and texts into 2 arrays. Pass those arrays into showNotes to load a table with the notes onto the screen.
@@ -342,6 +325,25 @@ function loadFolderNotes(folderID){
         showNotes(folderID, noteTitleArray, noteTextArray)
     }
 }
+
+function folderColor(folderID){
+    for (let i = 1; i <= 4; i++) {
+        let button = document.getElementById(`folder${i}`);
+        button.style.backgroundColor = '#add8e6';
+    }
+
+    // Set the background color for the specified folder
+    let selectedButton = document.getElementById(`folder${folderID}`);
+    if (selectedButton) {
+        selectedButton.style.backgroundColor = '#DEDAF4';
+    }
+}
+
+function buttonColor(noteButton, index){
+    const buttonColors = ['#8ed464', '#ffe2e7', '#8EC2EE','#b2b5ff'];
+    noteButton.style.backgroundColor = buttonColors[index % buttonColors.length];
+}
+
 
     
     
