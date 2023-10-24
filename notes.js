@@ -19,9 +19,9 @@ with input boxes for the title and text content.
 */
 function newNote(folderNum) {
     //remove the "no notes" table w/ button if it is there
-    const noNoteandCreateNote = document.querySelector('.noNoteandCreateNote');
-    if(noNoteandCreateNote){
-        noNoteandCreateNote.remove();
+    const noNotes = document.querySelector('.noNotes');
+    if(noNotes){
+        noNotes.remove();
     }
     //remove the folder navigation menu
     const folderNav = document.querySelector('.folderNav');
@@ -30,7 +30,7 @@ function newNote(folderNum) {
     }
     //create the html for the new note page. 
     const newNoteTableHTML = `  
-    <table class="titleNote" style="margin-top: 100px;">
+    <table class="titleNote" style="margin-top: 70px;">
             <tr>
                 <td>TITLE:</td>
                 <td><input type="text" id="noteTitle"></td>
@@ -38,29 +38,44 @@ function newNote(folderNum) {
         </table>
     `;
     const noteContentTableHTML = `
-        <table class="noteContent">
-            <tr>
-                <td>
-                <textarea id="noteText" style="width: 250px; height: 250px; background-color: #f0f0f0;"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button height: 30px;" id="saveNoteButton">Save</button>
-                    <button style= height: 30px;">Bold</button>
-                    <button style= height: 30px;">Italicize</button>
-                    <button style= height: 30px;">Underline</button>
-                    <button style=height: 30px;">Delete</button>
-                </td>
-            </tr>
-        </table>
-    `;
+    <table class="noteContent">
+        <tr>
+            <td>
+                <textarea id="noteText" style="width: 250px; height: 250px; background-color: #f0f0f0; font-family: 'Times New Roman', Times, serif; font-size: 15px;"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button style= height: 30px;" id="boldTextButton">Bold</button>
+                <button style= height: 30px;" id="italicizeButton">Italicize</button>
+                <button style= height: 30px;" id="underlineButton">Underline</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button height: 30px;" id="saveNoteButton">Save</button>
+            </td>
+        </tr>
+    </table>
+`;
     //add both to the document
     document.body.innerHTML += newNoteTableHTML + noteContentTableHTML;
     console.log("Loaded new note page for folder"+folderNum);
     //get the "save" button thats underneath the text area
     const saveNoteButton = document.getElementById('saveNoteButton');
+    const italicizeButton = document.getElementById('italicizeButton');
+    const underlineButton = document.getElementById('underlineButton');
+    const boldButton = document.getElementById('boldTextButton');
     //add an event listener to the button...
+    italicizeButton.addEventListener('click', function(){
+        italicizeButton();
+    });
+    boldButton.addEventListener('click', function(){
+        boldText();
+    });
+    underlineButton.addEventListener('click', function(){
+        underlineText();
+    });
     saveNoteButton.addEventListener('click', function(){
         console.log("Saving note to folder"+folderNum);
         //based on what folder the note is from, get the text entered into the title box and the text area and push into
@@ -126,7 +141,7 @@ function loadNote(folderNum, index){
     }
     //create the new note tables
     const newNoteTableHTML = `
-        <table class="titleNote" style="margin-top: 50px;">
+        <table class="titleNote" style="margin-top: 30px;">
             <tr>
                 <td>TITLE:</td>
                 <td><input type="text" id="noteTitle"></td>
@@ -137,16 +152,21 @@ function loadNote(folderNum, index){
         <table class="noteContent">
             <tr>
                 <td>
-                    <textarea id="noteText" style="width: 250px; height: 250px; background-color: #f0f0f0;"></textarea>
+                    <textarea id="noteText" style="width: 250px; height: 250px; background-color: #f0f0f0; font-family: 'Times New Roman', Times, serif; font-size: 15px;"></textarea>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <button height: 30px;" id="saveNoteButton">Save</button>
-                    <button style= height: 30px;">Bold</button>
-                    <button style= height: 30px;">Italicize</button>
-                    <button style= height: 30px;">Underline</button>
-                    <button style=height: 30px;">Delete</button>
+                    <button style= height: 30px;" id="boldButton">Bold</button>
+                    <button style= height: 30px;" id="italicizeButton">Italicize</button>
+                    <button style= height: 30px;" id="underlineButton">Underline</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button style=height: 30px;" id="saveNoteButton">Save</button>
+                    <button style=height: 30px;" id="deleteButton">Delete</button>
+                    <button style=height: 30px;" id="changeFolder">Change Folder</button>
                 </td>
             </tr>
         </table>
@@ -155,9 +175,30 @@ function loadNote(folderNum, index){
     //add both html codes inside of the document
     document.body.innerHTML += newNoteTableHTML + noteContentTableHTML;
     console.log("Recreated note boxes for folder"+folderNum);
+
+    const italicizeButton = document.getElementById('italicizeButton');
+    const changeFolderButton = document.getElementById('changeFolder');
+    const underlineButton = document.getElementById('underlineButton');
+    const deleteNoteButton = document.getElementById('deleteButton');
+
+
+    //add an event listener to the button...
+    italicizeButton.addEventListener('click', function(){
+        boldText();
+    });
+    underlineButton.addEventListener('click', function(){
+        underlineText();
+    });
+    changeFolderButton.addEventListener('click', function(){
+        changeFolder();
+    });
+    
+    
+
     //put the title and text that was previously entered back into the boxes
     const noteTextBox = document.getElementById('noteText');
     const noteTitleBox = document.getElementById('noteTitle');
+
     //depending on which folder the note was for, use the index of the title's place in the array to get the values
     //example: if folder2 has a note called "box", and its the 5th note in the note list, then its place in
     //folder2's note arrays is 4
@@ -219,6 +260,10 @@ function loadNote(folderNum, index){
             loadFolderNotes(4);
         }
         
+    });
+    deleteNoteButton.addEventListener('click', function(){
+        deleteNote(folderNum, index);
+        console.log("Deleted note "+index+" from folder"+folderNum);
     });
 }
 
@@ -282,16 +327,44 @@ function retrieveNoteText(folderid) {
             return noteTextArray4;
     }
 }
-
+//#########################################################################################################################################################
+//#########################################################################################################################################################
+//#########################################################################################################################################################
+//#########################################################################################################################################################
 function boldText(){
-
 }
 function underlineText(){
 
 }
 function ItalicizeText(){
+}
+function changeFolder(){
 
 }
-function deleteNote(){
-    
+//#########################################################################################################################################################
+//#########################################################################################################################################################
+//#########################################################################################################################################################
+//#########################################################################################################################################################
+function deleteNote(folderNum, index){
+    if(folderNum == 1){
+        noteTextArray1.splice(index, 1);
+        noteTitleArray1.splice(index, 1);
+        loadFolderNotes(1);
+    }
+    else if(folderNum == 2){
+        noteTextArray2.splice(index, 1);
+        noteTitleArray2.splice(index, 1);
+
+        loadFolderNotes(2);
+    }
+    else if(folderNum == 3){
+        noteTextArray3.splice(index, 1);
+        noteTitleArray3.splice(index, 1);
+        loadFolderNotes(3);
+    }
+    else if(folderNum == 4){
+        noteTextArray4.splice(index, 1);
+        noteTitleArray4.splice(index, 1);
+        loadFolderNotes(4);
+    }
 }
