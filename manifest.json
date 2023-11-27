@@ -1,20 +1,32 @@
 {
-    "manifest_version": 3,
-    "name": "Notelee",
-    "version": "0.1",
-    "action": {
-      "default_popup": "popup.html",
-      "default_title": "Notelee"
-    },
-    "content_scripts": [
-      {
-        "matches": [
-          "<all_urls>"
-        ],
-        "js": [
-          "accountManagement.js"
-        ]
-      }
-    ]
+  "manifest_version": 3,
+  "name": "Notelee",
+  "version": "0.1",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Notelee"
+  },
+  "content_scripts": [
+    
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "accountManagement.js",
+        "notes.js",
+        "folders.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'",
+    "extension_content": "script-src 'self' 'unsafe-eval' https://notelee-54eb8-default-rtdb.firebaseio.com/; object-src 'self'"
+  },
+  "background":{
+    "service-worker":"firebase-main.js",
+    "type": "module"
+    
   }
-  
+}
