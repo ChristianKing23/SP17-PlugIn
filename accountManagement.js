@@ -249,7 +249,6 @@ function register() {
                     const userData = {
                         userid: user.uid,
                         email: user.email,
-                        password: password,
                         folder1: [],
                         folder2: [],
                         folder3: [],
