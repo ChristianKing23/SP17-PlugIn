@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notelee</title>
@@ -14,8 +16,8 @@
             max-height: 400px;
             overflow-y: auto;
             flex-direction: column;
-            
-            
+
+
         }
 
         table {
@@ -23,11 +25,14 @@
             border-collapse: collapse;
         }
 
-        table, th, td {
+        table,
+        th,
+        td {
             margin: auto;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
         }
 
@@ -44,53 +49,59 @@
             border: 1px solid black;
             font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
             font-size: 30px;
-            
+
         }
 
         .navbar button {
-            background-color: #555;
-            color: white;
+            background-color: pink;
             border: none;
-            padding: 5px 10px;
             font-size: 16px;
             cursor: pointer;
             margin: 0 5px;
         }
+
         .navbar div {
-            font-weight: bold; 
+            font-weight: bold;
             margin: 0 auto;
             border: black;
         }
 
-        .navbar button:hover {
-            background-color: #777;
-        }
         .accountMenu button {
             background-color: #add8e6;
             color: black;
             border: none;
-            padding: 15px 30px; 
+            padding: 15px 30px;
             font-size: 20px;
             cursor: pointer;
             margin: 0 5px;
-            border-radius: 5px; 
+            border-radius: 5px;
             border: 1px solid black;
         }
 
         .accountMenu button:hover {
-            background-color: #87cefa; 
+            background-color: #87cefa;
+        }
+
+        #helpButton {
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Black_question_mark.png');
+            background-size: contain;
+            width: 25px;
+            height: 25px;
+            border: none;
+            cursor: pointer;
         }
     </style>
 
 </head>
+
 <body>
 
     <div class="navbar">
-        <div>Notelee</div>
-        <button>Help</button>
+        <div id="noteleeText">Notelee</div>
+        <button id="helpButton"></button>
     </div>
 
-    <table class="accountMenu" >
+    <table class="accountMenu">
         <tr>
             <td><button id="loginButton">Login</button></td>
         </tr>
@@ -98,10 +109,23 @@
             <td><button id="registerButton">Register</button></td>
         </tr>
         <tr>
-            <td>Please login to save notes!</td>
+            <td>
+                <p style="font-family: Arial; font-size: 20px;">Please login to save notes!</p>
+            </td>
         </tr>
     </table>
-    <script src="accountManagement.js"></script>
-    <script src="notes.js"></script>
+
+    <script src="notelee-firebaseref.js" type="module"></script>
+    <script src="firebase-database.js" type="module"></script>
+    <script src="background.js" type="module"></script>
+    <script src="folders.js" type="module"></script>
+    <script src="accountManagement.js" type="module"></script>
+    <script src="notes.js" type="module"></script>
+    <script src="firebase-app.js" type="module"></script>
+
+    <script src="firebase-auth.js" type="module"></script>
+    <script src="firebase-main.js" type="module"></script>
+
 </body>
+
 </html>
