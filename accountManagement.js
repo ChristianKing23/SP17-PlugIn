@@ -1,25 +1,50 @@
+/*
+
+This handles logging in and registering for Notelee.
+
+- adds event listeners to the login and register buttons on popup.html
+
+register():
+- adds a register menu with an email field, password field, and confirm password field. 
+- if the fields look good, create an authenticated user in firebase using their email and password.
+- create the user in the realtime database with a unique user id, email, password, and four empty folders.
+- set their data in chrome storage: their email, userid, and an empty status.
+- send an email verification link to the user's email. they will become verified by clicking the link in the email. reload the plugin to the beginning.
+
+tryLogin():
+- gets email and password from login menu.
+- if they aren't empty, search for an authenticated user with that email and password. 
+- if found with a verified email, set their status as active in chrome storage, then load folder 1.
+- if found and they are not verified, then alert them. they cannot continue.
+
+replaceAccountMenuWithLogin() and replaceAccountMenuwithRegister(): replaced the menu in popup.html with a login or register menu.
+
+addManageAccountButton(): adds a icon button to the top right next to the question mark for managing the user's account.
+
+addFolderNav(): adds folder navigation bar
+*/
+
+
+
 import { app } from './firebase-main.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from "/firebase-auth.js";
-import { getDatabase, ref, set, get } from "/firebase-database.js";
-import { loadFolderEventListener } from "/folders.js";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "/firebase-auth.js";
+import { getDatabase, ref, set, get, remove } from "/firebase-database.js";
+import { loadFolderEventListener, removeNoteCreationScreen, loadFolderNotes, addFolderNav } from "/folders.js";
 
 const auth = getAuth(app);
 const database = getDatabase(app);
 
 
-/*
-Purpose: replace html with a login menu or register menu
-*/
-function replaceAccountMenuWithLogin() {
+
+function replaceAccountMenuWithLogin() { //replaces the welcome menu with a login menu
     console.log("On function replaceAccountMenuWithLogin().");
-    //1. Get the menu table from popup.html.
-    const accountMenu = document.querySelector(".accountMenu");
-    //2. Create a login menu using the table element.
-    const loginMenu = document.createElement("table");
-    //2. Below is the table to be added into the html document.
-    //Row1: Email text with input box. Row2: Password text and input box. Row3: Login button.
-    loginMenu.classList.add("loginMenu");
-    loginMenu.innerHTML = `
+
+    const accountMenu = document.querySelector(".accountMenu"); //get welcome menu
+
+    const loginMenu = document.createElement("table"); //create a table for the login menu
+
+    loginMenu.classList.add("loginMenu"); //add a class to it
+    loginMenu.innerHTML = ` 
         <tr>
             <td>EMAIL:</td>
             <td><input type="text" id="email"></td>
@@ -29,31 +54,36 @@ function replaceAccountMenuWithLogin() {
             <td><input type="password" id="password"></td>
         </tr>
         <tr>
-            <td><button id="tryLogin">Login</td>
-            <td><button id="forgotPassword">Forgot Password?</td>
+            <td><button id="tryLogin"style="font-family: calibri; font-size: 18px;">Login</td>
+            <td><button id="forgotPassword" style="font-family: calibri; font-size: 18px;">Forgot Password?</td>
         </tr>
-    `;
-    //2. the accountMenu table in popup.html is being replaced with the loginMenu table above.
-    accountMenu.parentNode.replaceChild(loginMenu, accountMenu);
-    console.log("Replaced accountMenu with loginMenu.");
-    //3. the loginMenu table css properties
-    loginMenu.style.display = "flex";
+    `; //html of the login menu
+
+    accountMenu.parentNode.replaceChild(loginMenu, accountMenu); //replace welcome menu with login menu
+
+    loginMenu.style.display = "flex"; //style it
     loginMenu.style.justifyContent = "center";
     loginMenu.style.alignItems = "center";
     loginMenu.style.height = "100vh";
-    //4. Get the login button.
-    const tryLoginButton = document.getElementById('tryLogin');
-    //4. Add event listener to login button. call tryLogin().
-    tryLoginButton.addEventListener('click', tryLogin);
+    loginMenu.style.fontFamily = "Calibri";
+    loginMenu.style.fontSize = "15px";
+    loginMenu.id = "loginMenu"; //give it an id
+
+    const tryLoginButton = document.getElementById('tryLogin'); //get a reference to the login button and the forgot password button
+    const forgotPassword = document.getElementById("forgotPassword");
+
+    tryLoginButton.addEventListener('click', tryLogin); //add event listeners to call these functions when the buttons are clicked
+    forgotPassword.addEventListener('click', sendPasswordReset);
 }
-function replaceAccountMenuwithRegister() {
-    //1. get the popup menu
-    const accountMenu = document.querySelector(".accountMenu");
-    //1. Create a new table to serve as the menu for registering users.
-    const registerMenu = document.createElement("table");
-    //1. add a class to the register menu.
-    registerMenu.classList.add("registerMenu");
-    //1. registerMenu HTML code
+
+function replaceAccountMenuwithRegister() { //replaces the welome menu with the register menu
+
+    const accountMenu = document.querySelector(".accountMenu"); //get the welcome menu
+
+    const registerMenu = document.createElement("table"); //create a table for the register menu
+
+    registerMenu.classList.add("registerMenu");//give it a class
+
     registerMenu.innerHTML = `
     <tr>
         <td>EMAIL:</td>
@@ -70,150 +100,139 @@ function replaceAccountMenuwithRegister() {
     <tr>
         <td><button id="tryRegister">Register</td>
     </tr>
-`;
-    //1. replace the popup accountMenu with the registerMenu
-    accountMenu.parentNode.replaceChild(registerMenu, accountMenu);
-    console.log("Added register menu.");
-    //style the registerMenu
-    registerMenu.style.display = "flex";
+`; //register menu HTML
+
+    accountMenu.parentNode.replaceChild(registerMenu, accountMenu); //replace welcome menu with register menu
+
+    registerMenu.style.display = "flex"; //style it
     registerMenu.style.justifyContent = "center";
     registerMenu.style.alignItems = "center";
     registerMenu.style.height = "100vh";
 }
 
+function sendPasswordReset() { //sends a password reset email to the user
 
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-/*
-Purpose: find the user in the database, if they are there then add them to chrome storage with status "active"
-if they aren't there then send an error
-*/
-function tryLogin() {
+    const loginMenu = document.getElementById('loginMenu'); //get the login menu
 
-    //1. get the email and password from the input boxes
-    const emailInput = document.getElementById('email');
+    loginMenu.remove(); //remove it
+
+    const emailInput = document.createElement('input'); //create an input box for the email
+    emailInput.setAttribute('type', 'email');
+    emailInput.setAttribute('placeholder', 'Please enter your email'); //placeholder for the input box
+
+    document.body.appendChild(emailInput); //add it to the document
+
+    const resetButton = document.createElement('button'); //create a button that says rest password
+    resetButton.textContent = 'Reset Password';
+
+    resetButton.addEventListener('click', () => { //when the reset password button is clicked
+
+        const email = emailInput.value.trim(); //get the email entered in the input box
+
+        sendPasswordResetEmail(auth, email) //send password reset email to that email
+            .then(() => { //if it works...
+
+                alert('Password reset sent to ' + email); //alert
+
+                location.reload(); //reload the plugin so it starts from the beginning
+            })
+            .catch((error) => { //else, if it does not work...
+
+                console.error('Error sending password reset email:', error); //console the error
+            });
+    })
+
+    document.body.appendChild(resetButton); //add the reset button to the document below the input box
+}
+
+function tryLogin() { //takes the email and password and logs them into notelee
+
+    const emailInput = document.getElementById('email'); //get the email and password boxes
     const passwordInput = document.getElementById('password');
 
-    //1. trim them
-    const email = emailInput.value.trim();
+    const email = emailInput.value.trim(); //get the text entered into those boxes
     const password = passwordInput.value.trim();
 
 
-    //2. the email and password input boxes were NOT empty
-    if (email !== "" && password !== "") {
-        console.log("Trying login with email " + email + " and password " + password + ".");
 
-        //use email and password to authenticate the user
-        //if successful then add user to the database
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
+    if (email !== "" && password !== "") { //if user entered in text for the email and password..
 
-                //define user, userID
-                const user = userCredential.user;
-                const userId = user.uid;
+        console.log("accountManagement.js: Trying login with email " + email + " and password " + password + ".");
 
-                //get a referene for the user in the database using userid
-                const userRef = ref(database, `users/${userId}`);
-                get(userRef)
+
+        signInWithEmailAndPassword(auth, email, password) //sign in with the email and password using firebase authentication
+            .then((userCredential) => { //if they are authenticated...
+
+                const user = userCredential.user; //save the user 
+                const userId = user.uid; //save the userid
+
+                const userRef = ref(database, `users/${userId}`); //save the reference of the user in the database
+                get(userRef) //get the user
 
                     .then((snapshot) => {
 
-                        //if the user is in the database
-                        if (snapshot.exists()) {
+                        if (snapshot.exists()) { //if the user exists in the database...
 
-                            console.log("User is in the system.");
+                            console.log("accountManagement.js: found user in the database.");
 
-                            //get the userdata from the snapshot to the database
-                            const userData = snapshot.val();
+                            const userData = snapshot.val(); //save the user's database data
 
-                            if (user.emailVerified) {
+                            if (user.emailVerified) { //if they verified their email...
 
-                                const chromeUserData = {
+                                const chromeUserData = { //save the chrome storage data as their email, userid, and set their status as active
                                     email: userData.email,
                                     userid: userData.userid,
                                     status: "active"
                                 };
-    
-                                //in chrome storage, set the userdata
-                                chrome.storage.sync.set({ userData: chromeUserData });
-    
-                                //remove the loginMenu table
-                                const loginMenu = document.querySelector(".loginMenu");
-                                loginMenu.remove();
-    
-                                //add folder navigation and loading notes text
-                                addFolderNav();
-    
-                                //add ManageAccount button to the top bar
-                                addManageAccountButton();
+
+                                chrome.storage.sync.set({ userData: chromeUserData }); //set the chrome storage data
 
 
-                                loadFolderEventListener("login", userId);
-                            } else {
-                                alert("Please verify your email before continuing with notelee.");
+                                const loginMenu = document.querySelector(".loginMenu"); //get the login menu
+                                loginMenu.remove(); //remove it
+
+
+                                addFolderNav(); //add the folder navigation bar
+
+                                addManageAccountButton(); //add the manage account button
+
+
+                                loadFolderEventListener("login", userId); //load folder 1
+
+                            } else { //else if the user never verified their email...
+
+                                alert("Please verify your email before continuing with Notelee."); //alert
                             }
-
-
-
-                            //chromeuserdata is the data being added to chrome storage
-                            //make the status active since the user is currently using the plugin
-                           
                         }
-                        else {
+                        else { //else if the user is not in the database...
 
-                            //if user is not in the database
-                            console.log("User not in database");
+                            alert("This user is not in the database."); //alert
                         }
                     })
-
-                    //if any error from firebase
-                    .catch((error) => {
-                        alert("Error getting user data from Firebase: ", error);
+                    .catch((error) => { //if there is an error...
+                        alert("Error getting user data from Firebase: ", error); //alert
                     })
-
             })
-
-            //if authentication fails
-            .catch((error) => {
-                alert("Authentication failed. " + error.message);
+            .catch((error) => { //if there is an error...
+                alert("Authentication failed. " + error.message); //alert
             });
     }
+    else { //else if user left the input fields blank
 
-    //if user left the input fields blank
-    else {
-        //send an alert to let them know
-        alert("Please provide both email and password.");
+        alert("Please provide both email and password."); //alert
     }
 }
 
-
-
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-
-/*
-1.Replace the popup menu with a register menu.
-2.Ceate function for when the register button is clicked.
-4. Create rules for the register input boxes.
-5.if they pass the rules, load folder1.
-*/
-
-function register() {
-    console.log("On register().");
+function register() { //registers the user into Notelee
 
     //replace html
     replaceAccountMenuwithRegister();
 
     //add event listener to tryRegister
     const tryRegister = document.getElementById('tryRegister');
-    tryRegister.addEventListener('click', function () {
-        console.log("On tryRegister().");
+    tryRegister.addEventListener('click', function () { //when clicked..
 
-        // Retrive the texts entered in all 3 input boxes.
+        // Retrive the texts entered in all 3 input boxes
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const passConfirm = document.getElementById('confirmedPassword');
@@ -226,7 +245,7 @@ function register() {
         if (password.length < 6) {
             alert("Password must be at least 6 characters long.");
         }
-        else if (!email.includes('@')) {
+        else if (!email.includes('@') || !email.includes('.com')) {
             alert("Please provide a valid email address.");
         }
         else if (password !== confirmedPassword) {
@@ -235,17 +254,14 @@ function register() {
 
         //if all fields are correct then continue
         else {
-            createUserWithEmailAndPassword(auth, email, password)
+            createUserWithEmailAndPassword(auth, email, password) //create the user with their email and password as an authenticated user in firebase
                 .then((userCredential) => {
 
-                    const user = userCredential.user;
-
+                    const user = userCredential.user; //save the user's credentials entered
 
                     console.log("Trying to reigster with " + email + ", " + password);
 
-                    //create the user in the database using the email and password
-
-
+                    //set the users data to be entered into the database
                     const userData = {
                         userid: user.uid,
                         email: user.email,
@@ -255,108 +271,417 @@ function register() {
                         folder4: []
                     };
 
-                    //use chrome storage to save the user with an active status
+                    //use chrome storage to save the user in chrome
                     const chromeUserData = {
                         email: email,
                         userid: user.uid,
                         status: ""
                     };
-                    chrome.storage.sync.set({ userData: chromeUserData });
+                    chrome.storage.sync.set({ userData: chromeUserData }); //set it
 
-                    //set the user's data 
+                    //get a reference for the user 
                     const userRef = ref(database, `users/${user.uid}`);
 
-                    //if it works..
-                    set(userRef, userData).then(() => {
-                        alert("User data added to database.");
-                        location.reload();
-                    }).catch((error) => {
-                        //if it doesnt work
-                        console.error("Error adding user data: ", error);
+                    //set the user in the database
+                    set(userRef, userData).then(() => { //if it works..
+
+                        location.reload(); //reload the plugin
+
+                    }).catch((error) => { //if there's an error...
+
+                        console.error("Error adding user data: ", error);//log it
+
                     });
 
 
-                    sendEmailVerification(user)
-                        .then(() => {
-                            console.log("accountManagement.js: email verification sent to " + email + "...");
-                            alert("Email verification sent! Please check your email to verify your account.");
+                    sendEmailVerification(user) //send email verification to the user
+
+                        .then(() => { //if it works
+
+                            console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
+
+                            alert("Email verification sent! Please check your email to verify your account."); //alert
 
                         })
-                        .catch((error) => {
-                            alert(error);
+                        .catch((error) => { //if theres an error
+
+                            alert(error); //alert
+
                         });
-
-
-
-
                 })
-                .catch((error) => {
-                    alert("Registration failed: " + error.message);
-                });
+                .catch((error) => { //if theres an error with registration
 
+                    alert("Registration failed: " + error.message); //alert
+
+                });
         }
     });
 }
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-//#########################################################################################################################################################
-export function addFolderNav() {
-    const folderNavHTML = `
-    <div class="folderNav" style="background-color: white; width: 100%; 
-    margin-top: 47px;">
-        <button id="folder1" style="background-color: #add8e6;">Folder 1</button>
-        <button id="folder2" style="background-color: #add8e6;">Folder 2</button>
-        <button id="folder3" style="background-color: #add8e6;">Folder 3</button>
-        <button id="folder4" style="background-color: #add8e6;">Folder 4</button>
-    </div>
-    `;
-    //if the folder nav is somehow not on the screen already, add it.
-    const folderNav = document.querySelector('.folderNav');
-    if (!folderNav) {
-        document.body.innerHTML += folderNavHTML;
-    }
 
-    console.log("Added foldernav.");
-}
+export function addManageAccountButton() { //add the manage account button into the top bar of notelee
 
+    const navbar = document.querySelector(".navbar"); //get the navbar
 
-export function addManageAccountButton() {
-    const navbar = document.querySelector(".navbar");
-    const ManageAccountButton = document.createElement("button");
-    
-    const image = document.createElement("img");
+    const ManageAccountButton = document.createElement("button"); //create the button
+
+    const image = document.createElement("img"); //make the button an image
     image.src = "https://static-00.iconduck.com/assets.00/person-icon-486x512-eeiy7owm.png";
 
-    image.style.width = "25px";
+    image.style.width = "25px"; //style the image
     image.style.height = "25px";
 
-    // Add the image to the button
-    ManageAccountButton.appendChild(image);
+    ManageAccountButton.appendChild(image); //add the image to the button
 
-    // Set button properties
-    ManageAccountButton.id = 'ManageAccount';
+    ManageAccountButton.id = 'ManageAccount'; //style the button
     ManageAccountButton.style.width = "25px";
     ManageAccountButton.style.height = "25px";
     ManageAccountButton.style.backgroundSize = "contain";
     ManageAccountButton.style.marginRight = "10px";
+    ManageAccountButton.style.opacity = "0.5";
+    ManageAccountButton.style.backgroundColor = "transparent";
 
 
-    // Add the button to the navbar
-    navbar.appendChild(ManageAccountButton);
+    navbar.appendChild(ManageAccountButton); //add it to the top bar
 
     console.log("Added ManageAccount button.");
 }
 
+export function showTutorial() { //function for when the question mark button is clicked
 
-/*
-Here, we get the login button and the register button from the popup menu.
-When either is clicked, call their respective functions.
-*/
+    const tutorialButton = document.getElementById("tutorialButton"); //get the button
 
-const loginButton = document.querySelector("#loginButton");
-const registerButton = document.querySelector("#registerButton");
+    tutorialButton.addEventListener('mouseover', function () { //when hovered make the opacity full
+        tutorialButton.style.opacity = '1';
+    });
+
+    tutorialButton.addEventListener('mouseout', function () { //when unhovered make it half
+        tutorialButton.style.opacity = '0.5';
+    });
+
+    tutorialButton.addEventListener("click", function () { //when clicked...
+
+        //create html for the popup window
+        const popupHTML = `
+        <!DOCTYPE html>
+        <html lang="en">
+        
+        <head>
+        
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Notelee Tutorial</title>
+            <style>
+                body {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 300px;
+                    min-height: 400px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    flex-direction: column;
+        
+        
+                }
+        
+        
+                .navbar {
+                    display: flex;
+                    top: 0;
+                    position: fixed;
+                    justify-content: space-between;
+                    align-items: center;
+                    width: 350px;
+                    background-color: pink;
+                    color: white;
+                    padding: 10px;
+                    border: 1px solid black;
+                    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+                    font-size: 30px;
+        
+                }
+        .navbar button {
+                    background-color: pink;
+                    border: none;
+                    font-size: 16px;
+                    cursor: pointer;
+                    margin: 0 5px;
+                }
+                .navbar div {
+                    font-weight: bold;
+                    margin: 0 auto;
+                    border: black;
+                }
+        .tutorialTable {
+            font-family: 'calibri';
+            font-size: 17px;
+            width: 350px;
+            text-align: center;
+            margin-top: 450px;
+            border-collapse: separate;
+            border-spacing: 20px;
+        
+        }
+        
+              
+            </style>
+        
+        </head>
+        
+        <body>
+        
+            <div class="navbar">
+                <div id="noteleeText">Notelee</div>
+                <button id="helpButton"></button>
+            </div>
+        
+        <table class="tutorialTable">
+        <thead><th>Welcome to Notelee!</th></thead>
+        <tr><td>Here is how it works:</td></tr>
+        <tr><td>1. After logging in, travel between 4 folders using the folder navigation bar.</td></tr>
+        <tr><td><img src="https://i.ibb.co/dBWSVnK/folders.png" alt="folders" border="0"></td></tr>
+        <tr><td>2. Create a new note for a folder by hitting the "Create Note" button.</td></tr>
+        <tr><td><img src="https://i.ibb.co/zmXcLGF/create-note.png" alt="create-note" border="0"></td></tr>
+        <tr><td>3. Delete a note by hitting the red "x" icon to the right of the desired note.</td></tr>
+        <tr><td><img src="https://i.ibb.co/TMc5dLR/note-list.png" alt="note-list" border="0"></td></tr>
+        <tr><td>4.Sign off and Manage your Account using the top right icon in the top bar.</td></tr>
+        <tr><td><img src="https://i.ibb.co/tpqHvWD/account-manage-button.png" alt="account-manage-button" border="0"></td></tr>
+        </table>
+        
+        
+        </body>
+        
+        </html>
+        `;
+
+        const popup = window.open('', '_blank', 'width=350,height=700'); //define the popup
+
+        popup.document.write(popupHTML); //write the html code into the popup
+
+    });
+
+}
+
+export function manageAccountEventListener(userId) { //this function is for the manage account button, the person icon on the top right
+    let email = "";
+    chrome.storage.sync.get(['userData'], function (result) {
+        const userdata = result.userData; //save it
+        email = userdata.email;
+    })
 
 
-loginButton.addEventListener("click", replaceAccountMenuWithLogin);
-registerButton.addEventListener("click", register);
+    const ManageAccount = document.getElementById('ManageAccount'); //get the button
+
+    ManageAccount.addEventListener('mouseover', function () { //when mouse is over it, give it full opacity
+        ManageAccount.style.opacity = '1';
+    });
+
+    ManageAccount.addEventListener('mouseout', function () { //when mouse is not over it, give it half opacity
+        ManageAccount.style.opacity = '0.5';
+    });
+
+    ManageAccount.addEventListener('click', function () { //when button is clicked...
+
+        //remove note list, no note, and create note button
+        const noNotes = document.querySelector('.noNotes');
+        const bottombar = document.querySelector('.bottombar');
+        const noteList = document.querySelector('.noteList');
+        const folderNav = document.querySelector('.folderNav');
+        const loadingDisplay = document.getElementById("loadingDisplay");
+        removeNoteCreationScreen(); //remove the note creation screen if there
+
+        if (noNotes) {
+            noNotes.remove();
+        }
+        if (bottombar) {
+            bottombar.remove();
+        }
+        if (noteList) {
+            noteList.remove();
+        }
+        if (folderNav) {
+            folderNav.remove();
+        }
+        if (loadingDisplay) {
+            loadingDisplay.remove();
+        }
+
+
+        document.body.style.backgroundColor = '#3AA6B9'; //make the background color blue
+
+        //create html for the display
+        const manageAccHTML = `
+        <table class="manageAccTable" style=" width: 50%; height: 100%; margin-top:15px; padding: 25px;">
+        <thead><th><p id="welcomeMessage" style="color: #C1ECE4;font-size: 17px; font-family: calibri;">ff</p></th></thead>
+        <tr>
+        <td>
+        <button id="logOutButton" style="padding: 0px; width: 100%; font-size: 18px; font-family: Calibri; border: 1px solid black; background-color: #87CBB9;">Log Out</button>
+        </td>
+        </tr>
+        <tr>
+        <td>
+        <button id="deleteAccButton" style=" font-weight:bold; padding: 0px; width: 100%;  font-size: 18px; font-family: Calibri; border: 1px solid black; background-color: #87CBB9;">Delete Account</button>
+        </td>
+        </tr>
+        <tr><td><button id="backButton" style="width: 160px; font-size: 18px; font-family: Calibri; border: 1px solid black; background-color: transparent; border-radius:20px; background-color:#FF9EAA; margin-top:50px;">Back to Folders!</button></td></tr>
+        </table>
+
+        `
+        document.body.innerHTML += manageAccHTML; //add the html 
+
+        const welcomeMessage = document.getElementById("welcomeMessage"); //get the welcome message text
+        welcomeMessage.textContent = "Hey " + email + "!"; //make the text content = "Hey" + email + "!"
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        const backButton = document.getElementById("backButton"); //get the back button
+        backButton.addEventListener('mouseover', function () { //when hovered make the border white
+            backButton.style.borderColor = 'white';
+        });
+        backButton.addEventListener('mouseout', function () { //when not hovered make it black
+            backButton.style.borderColor = 'black';
+        });
+        backButton.addEventListener('click', function () {
+            addFolderNav();
+            loadFolderNotes(1, userId);
+            loadFolderEventListener("alreadylogged", userId);
+        });
+
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        const logOutButton = document.getElementById("logOutButton"); //get log out button
+        logOutButton.addEventListener('mouseover', function () { //when hovered make the border white
+            logOutButton.style.borderColor = 'white';
+        });
+
+        logOutButton.addEventListener('mouseout', function () { //not hovered make it black
+            logOutButton.style.borderColor = 'black';
+        });
+        logOutButton.addEventListener('click', function () { //when clicked...
+
+            //get the userdata from chrome storage
+            chrome.storage.sync.get(['userData'], function (result) {
+
+                const userData = result.userData; //save it
+
+
+                if (userData) {
+
+                    userData.status = "inactive"; //make the user's status "inactive"
+
+                    chrome.storage.sync.set({ userData }, function () { //set it
+
+                        alert("Successfully logged out. See you again!"); //alert
+
+                        location.reload(); //reload
+                    });
+                }
+            });
+        });
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        const deleteAccButton = document.getElementById("deleteAccButton"); //get the delete account button
+
+        deleteAccButton.addEventListener('mouseover', function () { //when hovered make the border red
+
+            deleteAccButton.style.borderColor = 'red';
+        });
+
+        deleteAccButton.addEventListener('mouseout', function () { //unhovered make it black
+
+            deleteAccButton.style.borderColor = 'black';
+        });
+        deleteAccButton.addEventListener('click', function () { //when clicked...
+
+            const manageAccTable = document.querySelector('.manageAccTable'); //get the manage acc table and remove it
+            if (manageAccTable) {
+                manageAccTable.remove();
+            }
+
+            //create html for the delete account confirmation display
+            const deleteAccConfirmHTML = `
+            <table style="margin-top: 40px;" class="deleteAccConfirmTable">
+    <thead>
+        <tr>
+            <td colspan="2">
+                <p style="font-family: Calibri; color: red; font-weight: bold; font-size: 20px;">Are you sure you want to delete your account? All notes will be deleted forever.</p>
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+        <td><button id="yesButton" style="background-color: red; width: fit-content;">Yes, Delete my Account!</button></td>
+        <td><button id="noButton" style="background-color: green;">No!</button></td>
+        
+        </tr>
+    </tbody>
+</table>
+            
+            `
+
+            document.body.innerHTML += deleteAccConfirmHTML; //add it to the document
+
+
+
+            const yesButton = document.getElementById("yesButton"); //get the yes button
+
+            yesButton.addEventListener('click', function () { //when clicked...
+
+                const user = auth.currentUser; //get the current user from the firebase authenticated users
+
+                try {
+
+                    remove(ref(database, `users/${userId}`)); //remove all their data from the database
+
+                    deleteUser(user); //delete the user from the list of authenticated users
+
+                    alert('Your account has been deleted.'); //alert
+
+                    chrome.storage.sync.get(['userData'], function (result) { //get their data from chrome storage
+
+                        const userData = result.userData;
+
+                        if (userData) {
+
+                            chrome.storage.sync.remove({ userData }, function () { //remove it
+
+                                location.reload(); //reload
+
+                            });
+                        }
+                    });
+                } catch (error) { //catch errors
+                    console.error('Error deleting account:', error.message);
+                    alert('Failed to delete the account.');
+                }
+            })
+
+            const noButton = document.getElementById("noButton"); //get the no button
+
+            noButton.addEventListener('click', function () { //when clicked...
+
+                const deleteAccConfirmTable = document.querySelector('.deleteAccConfirmTable');
+
+                deleteAccConfirmTable.remove(); //remove the delete confirmation display
+                addFolderNav();
+                loadFolderNotes(1, userId); //go back to folder 1
+                loadFolderEventListener("alreadylogged", userId); //load folder buttons
+
+
+            })
+        });
+
+    });
+
+}
+
+const loginButton = document.querySelector("#loginButton"); //get login button
+const registerButton = document.querySelector("#registerButton"); //get register button
+
+loginButton.addEventListener("click", replaceAccountMenuWithLogin); //add event listener
+registerButton.addEventListener("click", register); //add event listener
