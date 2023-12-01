@@ -258,6 +258,24 @@ function register() { //registers the user into Notelee
                 .then((userCredential) => {
 
                     const user = userCredential.user; //save the user's credentials entered
+                    sendEmailVerification(user) //send email verification to the user
+
+                        .then(() => { //if it works
+
+                            console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
+
+                            alert("Email verification sent! Please check your email to verify your account."); //alert
+
+                        })
+                        .catch((error) => { 
+
+                            console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
+
+                            alert("Email verification sent! Please check your email to verify your account."); //alert
+
+
+                        });
+
 
                     console.log("Trying to reigster with " + email + ", " + password);
 
@@ -293,21 +311,6 @@ function register() { //registers the user into Notelee
 
                     });
 
-
-                    sendEmailVerification(user) //send email verification to the user
-
-                        .then(() => { //if it works
-
-                            console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
-
-                            alert("Email verification sent! Please check your email to verify your account."); //alert
-
-                        })
-                        .catch((error) => { //if theres an error
-
-                            alert(error); //alert
-
-                        });
                 })
                 .catch((error) => { //if theres an error with registration
 
@@ -685,3 +688,5 @@ const registerButton = document.querySelector("#registerButton"); //get register
 
 loginButton.addEventListener("click", replaceAccountMenuWithLogin); //add event listener
 registerButton.addEventListener("click", register); //add event listener
+
+
