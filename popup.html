@@ -14,7 +14,7 @@
             width: 300px;
             min-height: 400px;
             max-height: 400px;
-            overflow-y: auto;
+            overflow: hidden;
             flex-direction: column;
 
 
@@ -31,11 +31,6 @@
             margin: auto;
         }
 
-        th,
-        td {
-            padding: 10px;
-        }
-
         .navbar {
             display: flex;
             top: 0;
@@ -43,7 +38,9 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            background-color: pink;
+            height: 20px;
+            max-height: 20px;
+            background-color: #FACBEA;
             color: white;
             padding: 10px;
             border: 1px solid black;
@@ -82,9 +79,10 @@
             background-color: #87cefa;
         }
 
-        #helpButton {
+        #tutorialButton {
             background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Black_question_mark.png');
             background-size: contain;
+            background-color: transparent;
             width: 25px;
             height: 25px;
             border: none;
@@ -97,8 +95,12 @@
 <body>
 
     <div class="navbar">
-        <div id="noteleeText">Notelee</div>
-        <button id="helpButton"></button>
+        <div id="noteleeText">
+            <img id="topBarImg" style="padding: 0px; width: 30px; height: auto; margin-right:50px;"
+                src="https://64.media.tumblr.com/9bee709c5578fbd530da764bf10d6b25/0e2c2b372ebc7523-57/s250x400/f4326df56ce4d07c878ee99d72797870c43dbc32.pnj">
+            </img>Notelee
+        </div>
+        <button id="tutorialButton" style="opacity: 0.5;"></button>
     </div>
 
     <table class="accountMenu">
@@ -110,7 +112,7 @@
         </tr>
         <tr>
             <td>
-                <p style="font-family: Arial; font-size: 20px;">Please login to save notes!</p>
+                <p style="font-family: Arial; font-size: 20px;">Welcome to Notelee!</p>
             </td>
         </tr>
     </table>
