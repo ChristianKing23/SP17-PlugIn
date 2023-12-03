@@ -261,20 +261,13 @@ function register() { //registers the user into Notelee
                     sendEmailVerification(user) //send email verification to the user
 
                         .then(() => { //if it works
-
                             console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
-
-                            alert("Email verification sent! Please check your email to verify your account."); //alert
-
                         })
-                        .catch((error) => { 
-
-                            console.log("accountManagement.js: email verification sent to " + email + "..."); //log it
-
-                            alert("Email verification sent! Please check your email to verify your account."); //alert
-
-
+                        .catch((error) => {
+                            console.error(error);
                         });
+                        
+                    alert("Email verification sent! Please check your email to verify your account.");
 
 
                     console.log("Trying to reigster with " + email + ", " + password);
