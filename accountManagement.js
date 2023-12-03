@@ -643,16 +643,14 @@ export function manageAccountEventListener(userId) { //this function is for the 
 
                     deleteUser(user); //delete the user from the list of authenticated users
 
-                    alert('Your account has been deleted.'); //alert
-
                     chrome.storage.sync.get(['userData'], function (result) { //get their data from chrome storage
 
                         const userData = result.userData;
 
                         if (userData) {
 
-                            chrome.storage.sync.remove({ userData }, function () { //remove it
-
+                            chrome.storage.sync.remove('userData', function () { //remove it
+                                alert('Your account has been deleted.'); //alert
                                 location.reload(); //reload
 
                             });
